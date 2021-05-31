@@ -196,47 +196,9 @@ class MarketProcessorTest {
 //        shares.parseString("u,9,10,bid");
 //        shares.parseString("u,8,15,bid");
 //
-//        shares.parseString("u,5,10,ask");
+    //        shares.parseString("u,5,10,ask");
 //        assertEquals(9, bidOrders.peekKey());
 //        assertEquals("5", shares.getSizeByPrice(bidOrders.peekKey()));
-//    }
-//
-//    @Test
-//    @DisplayName("removeAllOrders()")
-//    void removeAllOrders() {
-//        shares.parseString("u,20,5,ask");
-//        shares.parseString("u,21,10,ask");
-//        shares.parseString("u,22,15,ask");
-//        shares.parseString("u,10,5,bid");
-//        shares.parseString("u,9,10,bid");
-//        shares.parseString("u,8,15,bid");
-//
-//        bidOrders.removeOrders(100);
-//        askOrders.removeOrders(100);
-//
-//        assertEquals(0, askOrders.keys.size());
-//        assertEquals(0, bidOrders.keys.size());
-//        assertEquals(0, askOrders.book.size());
-//        assertEquals(0, bidOrders.book.size());
-//        assertEquals("0", shares.getSizeByPrice(100));
-//    }
-//
-//
-//    @Test
-//    @DisplayName("parseString()")
-//    void parseString() {
-//        shares.parseString("u,20,5,ask");
-//        shares.parseString("u,21,10,ask");
-//        shares.parseString("u,22,15,ask");
-//        shares.parseString("u,10,5,bid");
-//        shares.parseString("u,9,10,bid");
-//        shares.parseString("u,8,15,bid");
-//
-//        assertEquals(3, askOrders.keys.size());
-//        assertEquals(3, bidOrders.keys.size());
-//        assertEquals(3, askOrders.book.size());
-//        assertEquals(3, bidOrders.book.size());
-//
 //    }
 
     @Test
@@ -263,6 +225,60 @@ class MarketProcessorTest {
     }
 
     @Test
+    void process5() {
+        MarketProcessor marketProcessor = new MarketProcessor();
+
+        Stream<String> process = marketProcessor.process(
+                Stream.of(
+                        "u,22,15,ask",
+                        "u,21,10,ask",
+                        "u,20,5,ask",
+                        "u,23,10,bid",
+                        "q,size,21",
+                        "u,10,5,bid",
+                        "u,9,10,bid",
+                        "u,8,15,bid",
+                        "u,5,10,ask",
+                        "q,size,9")
+        );
+
+        List<String> collect = process.collect(Collectors.toList());
+        assertEquals("5", collect.get(0));
+        assertEquals("5", collect.get(1));
+    }
+
+    @Test
+    void process6() {
+        MarketProcessor marketProcessor = new MarketProcessor();
+
+        Stream<String> process = marketProcessor.process(
+                Stream.of(
+                        "u,20,5,ask",
+                        "u,21,10,ask",
+                        "u,22,15,ask",
+                        "u,10,5,bid",
+                        "u,9,10,bid",
+                        "u,8,15,bid",
+                        "o,sell,100",
+                        "o,buy,100",
+                        "q,size,20",
+                        "q,size,21",
+                        "q,size,22",
+                        "q,size,10",
+                        "q,size,9",
+                        "q,size,8")
+        );
+
+        List<String> collect = process.collect(Collectors.toList());
+        assertEquals("0", collect.get(0));
+        assertEquals("0", collect.get(1));
+        assertEquals("0", collect.get(2));
+        assertEquals("0", collect.get(3));
+        assertEquals("0", collect.get(4));
+        assertEquals("0", collect.get(5));
+    }
+
+    @Test
     void process1() {
         MarketProcessor marketProcessor = new MarketProcessor();
 
@@ -276,7 +292,7 @@ class MarketProcessorTest {
         );
 
         List<String> collect = process.collect(Collectors.toList());
-        System.out.println(collect);
+        assertEquals("9,4", collect.get(0));
     }
 
     @Test
@@ -289,6 +305,30 @@ class MarketProcessorTest {
 
         List<String> collect = process.collect(Collectors.toList());
         assertTrue(collect.isEmpty());
+    }
+
+    @Test
+    void process3() {
+        MarketProcessor marketProcessor = new MarketProcessor();
+
+        Stream<String> process = marketProcessor.process(
+                Stream.of("q,best_ask")
+        );
+
+        List<String> collect = process.collect(Collectors.toList());
+        assertTrue(collect.isEmpty());
+    }
+
+    @Test
+    void process4() {
+        MarketProcessor marketProcessor = new MarketProcessor();
+
+        Stream<String> process = marketProcessor.process(
+                Stream.of("q,size,19")
+        );
+
+        List<String> collect = process.collect(Collectors.toList());
+        assertEquals("0", collect.get(0));
     }
 
     @Test

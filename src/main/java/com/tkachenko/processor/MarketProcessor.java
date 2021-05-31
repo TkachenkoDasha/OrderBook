@@ -15,7 +15,7 @@ import java.util.PriorityQueue;
 import java.util.stream.Stream;
 
 import static java.util.Objects.nonNull;
-// todo need to fix bid and ask at same price
+
 public class MarketProcessor {
 
     private PriorityQueue<Integer> askPrices = new PriorityQueue<>();
@@ -52,16 +52,56 @@ public class MarketProcessor {
         String type = updateData.getType();
         Integer price = updateData.getPrice();
         Integer size = updateData.getSize();
-        // todo: fix
+
         if (type.equals("bid")) {
-            bidPrices.add(price);
+            addBid(price, size);
         } else if (type.equals("ask")) {
-            askPrices.add(price);
+            addAsk(price, size);
         } else {
             throw new IllegalInputException("There are no such update: " + line);
         }
+    }
 
-        orderBook.put(price, size);
+    private void addBid(Integer price, Integer size) {
+        if(askPrices.contains(price)) {
+            Integer askSize = orderBook.get(price);
+            if(size > askSize) {
+                askPrices.remove(price);
+                size -= askSize;
+                bidPrices.add(price);
+                orderBook.put(price, size);
+            } else if (size < askSize) {
+                size -= askSize;
+                orderBook.put(price, size);
+            } else {
+                askPrices.remove(price);
+                orderBook.remove(price);
+            }
+        } else {
+            bidPrices.add(price);
+            orderBook.put(price, size);
+        }
+    }
+
+    private void addAsk(Integer price, Integer size) {
+        if (bidPrices.contains(price)) {
+            Integer bidSize = orderBook.get(price);
+            if (size > bidSize) {
+                bidPrices.remove(price);
+                size -= bidSize;
+                askPrices.add(price);
+                orderBook.put(price, size);
+            } else if(size < bidSize) {
+                size -= bidSize;
+                orderBook.put(price, size);
+            } else {
+                bidPrices.remove(price);
+                orderBook.remove(price);
+            }
+        } else {
+            askPrices.add(price);
+            orderBook.put(price, size);
+        }
     }
 
     private void processQuery(String line, List<String> result) {
