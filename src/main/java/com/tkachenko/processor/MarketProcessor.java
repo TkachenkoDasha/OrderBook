@@ -10,13 +10,12 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.PriorityQueue;
 import java.util.stream.Stream;
 
 import static java.util.Objects.nonNull;
 // todo need to fix bid and ask at same price
-// buy all the most cheap asks
-// sell all the most expensive bids
 public class MarketProcessor {
 
     private PriorityQueue<Integer> askPrices = new PriorityQueue<>();
@@ -88,11 +87,15 @@ public class MarketProcessor {
         if (type.equals("best_ask")) {
             Integer bestAsk = askPrices.peek();
             Integer size = orderBook.get(bestAsk);
-            result.add(bestAsk + "," + size);
+            if (Objects.nonNull(bestAsk) && Objects.nonNull(size)) {
+                result.add(bestAsk + "," + size);
+            }
         } else if (type.equals("best_bid")) {
             Integer bestBid = bidPrices.peek();
             Integer size = orderBook.get(bestBid);
-            result.add(bestBid + "," + size);
+            if (Objects.nonNull(bestBid) && Objects.nonNull(size)) {
+                result.add(bestBid + "," + size);
+            }
         } else {
             throw new IllegalInputException("There are no such query: " + type);
         }
@@ -114,13 +117,14 @@ public class MarketProcessor {
     private void doBuy(int size) {
         Integer minPrice = askPrices.peek();
         Integer sizeByMinPrice = orderBook.get(minPrice);
+        if(Objects.isNull(sizeByMinPrice)) {
+            return;
+        }
         if (size > sizeByMinPrice) {
             orderBook.remove(minPrice);
-            askPrices.remove(minPrice);
-            size -= sizeByMinPrice;
+            askPrices.poll();
 
-            orderBook.put(minPrice, size);
-            bidPrices.add(minPrice);
+            doBuy(size - sizeByMinPrice);
         } else if (size == sizeByMinPrice) {
             orderBook.remove(minPrice);
             askPrices.poll();
@@ -133,13 +137,15 @@ public class MarketProcessor {
     private void doSell(int size) {
         Integer maxPrice = bidPrices.peek();
         Integer sizeByMaxPrice = orderBook.get(maxPrice);
+        if(Objects.isNull(sizeByMaxPrice)) {
+            return;
+        }
+
         if (size > sizeByMaxPrice) {
             orderBook.remove(maxPrice);
-            bidPrices.remove(maxPrice);
-            size -= sizeByMaxPrice;
+            bidPrices.poll();
 
-            orderBook.put(maxPrice, size);
-            askPrices.add(maxPrice);
+            doSell(size - sizeByMaxPrice);
         } else if (size == sizeByMaxPrice) {
             orderBook.remove(maxPrice);
             bidPrices.poll();
