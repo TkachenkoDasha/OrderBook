@@ -36,12 +36,12 @@ class MarketProcessorTest {
                         "q,size,888")
         );
         List<String> collect = process.collect(Collectors.toList());
-        assertEquals("5", collect.get(0));
-        assertEquals("10", collect.get(1));
-        assertEquals("15", collect.get(2));
-        assertEquals("5", collect.get(3));
-        assertEquals("10", collect.get(4));
-        assertEquals("15", collect.get(5));
+        assertEquals("0", collect.get(0));
+        assertEquals("0", collect.get(1));
+        assertEquals("0", collect.get(2));
+        assertEquals("0", collect.get(3));
+        assertEquals("0", collect.get(4));
+        assertEquals("0", collect.get(5));
         assertEquals("0", collect.get(6));
     }
 
@@ -160,46 +160,47 @@ class MarketProcessorTest {
         assertEquals("0", collect.get(2));
     }
 
-//    @Test
-//    @DisplayName("insertMiddleOrder()")
-//    void insertMiddleOrder() {
-//        Stream<String> process = marketProcessor.process(
-//                Stream.of(
-//                        "u,22,15,ask",
-//                        "u,21,10,ask",
-//                        "u,20,5,ask",
-//                        "u,21,20,bid",
-//                        "q,size,21",
-//                        "u,10,5,bid",
-//                        "u,9,10,bid",
-//                        "u,8,15,bid",
-//                        "u,9,30,ask",
-//                        "q,size,9")
-//        );
-//        List<String> collect = process.collect(Collectors.toList());
-//        assertEquals("21,5", collect.get(0));
-//        assertEquals("9,10", collect.get(1));
-//    }
-//
-//    @Test
-//    @DisplayName("insertMiddleOrder()")
-//    void insertMiddleOrder2() {
-//        shares.parseString("u,22,15,ask");
-//        shares.parseString("u,21,10,ask");
-//        shares.parseString("u,20,5,ask");
-//
-//        shares.parseString("u,23,10,bid");
-//        assertEquals(21, askOrders.peekKey());
-//        assertEquals("5", shares.getSizeByPrice(askOrders.peekKey()));
-//
-//        shares.parseString("u,10,5,bid");
-//        shares.parseString("u,9,10,bid");
-//        shares.parseString("u,8,15,bid");
-//
-    //        shares.parseString("u,5,10,ask");
-//        assertEquals(9, bidOrders.peekKey());
-//        assertEquals("5", shares.getSizeByPrice(bidOrders.peekKey()));
-//    }
+    @Test
+    @DisplayName("insertMiddleOrder()")
+    void insertMiddleOrder() {
+        Stream<String> process = marketProcessor.process(
+                Stream.of(
+                        "u,22,15,ask",
+                        "u,21,10,ask",
+                        "u,20,5,ask",
+                        "u,21,20,bid",
+                        "q,size,21",
+                        "u,10,5,bid",
+                        "u,9,10,bid",
+                        "u,8,15,bid",
+                        "u,9,30,ask",
+                        "q,size,9")
+        );
+        List<String> collect = process.collect(Collectors.toList());
+        assertEquals("5", collect.get(0));
+        assertEquals("10", collect.get(1));
+    }
+
+    @Test
+    @DisplayName("insertMiddleOrder()")
+    void insertMiddleOrder2() {
+        Stream<String> process = marketProcessor.process(
+                Stream.of(
+                        "u,22,15,ask",
+                        "u,21,10,ask",
+                        "u,20,5,ask",
+                        "u,23,10,bid",
+                        "q,size,21",
+                        "u,10,5,bid",
+                        "u,9,10,bid",
+                        "u,8,15,bid",
+                        "u,5,10,ask",
+                        "q,size,9")
+        );
+        List<String> collect = process.collect(Collectors.toList());
+        assertEquals("5", collect.get(0));
+        assertEquals("5", collect.get(1));
+    }
 
     @Test
     void process() {

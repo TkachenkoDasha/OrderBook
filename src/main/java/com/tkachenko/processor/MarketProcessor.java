@@ -14,6 +14,7 @@ import java.util.Objects;
 import java.util.PriorityQueue;
 import java.util.stream.Stream;
 
+import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
 public class MarketProcessor {
@@ -54,9 +55,23 @@ public class MarketProcessor {
         Integer size = updateData.getSize();
 
         if (type.equals("bid")) {
-            addBid(price, size);
+            if (nonNull(askPrices.peek()) && price > askPrices.peek()) {
+                int boughtSize = doBuy(size, price);
+                if (boughtSize > 0 && boughtSize < size) {
+                    addBid(price, size - boughtSize);
+                }
+            } else {
+                addBid(price, size);
+            }
         } else if (type.equals("ask")) {
-            addAsk(price, size);
+            if (nonNull(bidPrices.peek()) && price < bidPrices.peek()) {
+                int soldSize = doSell(size, price);
+                if (soldSize > 0 && soldSize < size) {
+                    addAsk(price, size - soldSize);
+                }
+            } else {
+                addAsk(price, size);
+            }
         } else {
             throw new IllegalInputException("There are no such update: " + line);
         }
@@ -145,54 +160,83 @@ public class MarketProcessor {
         MarketOrderData marketOrderData = orderBookParser.parseMarketOrder(line);
 
         if (marketOrderData.getType().equals("sell")) {
-            doSell(marketOrderData.getSize());
+            doSell(marketOrderData.getSize(), null);
         } else if (marketOrderData.getType().equals("buy")) {
-            doBuy(marketOrderData.getSize());
+            doBuy(marketOrderData.getSize(), null);
         } else {
             throw new IllegalInputException("There are no such market orders: " + line);
         }
 
     }
 
-    private void doBuy(int size) {
+    private int doBuy(int size, Integer price) {
+        int sumOfBoughtSizes = 0;
+
         Integer minPrice = askPrices.peek();
         Integer sizeByMinPrice = orderBook.get(minPrice);
-        if(Objects.isNull(sizeByMinPrice)) {
-            return;
-        }
-        if (size > sizeByMinPrice) {
-            orderBook.remove(minPrice);
-            askPrices.poll();
 
-            doBuy(size - sizeByMinPrice);
-        } else if (size == sizeByMinPrice) {
-            orderBook.remove(minPrice);
-            askPrices.poll();
+        if (size >= sizeByMinPrice) {
+            while ((nonNull(sizeByMinPrice) && isNull(price))
+                    || (nonNull(price) && nonNull(minPrice) && price >= minPrice)) {
+                if (size < sizeByMinPrice) {
+                    int newSize = sizeByMinPrice - size;
+                    orderBook.put(minPrice, newSize);
+                    sumOfBoughtSizes += size;
+                    break;
+                }
+
+                orderBook.remove(minPrice);
+                askPrices.poll();
+                sumOfBoughtSizes += sizeByMinPrice;
+
+                size -= sizeByMinPrice;
+
+                minPrice = askPrices.peek();
+                sizeByMinPrice = orderBook.get(minPrice);
+            }
         } else {
             int newSize = sizeByMinPrice - size;
             orderBook.put(minPrice, newSize);
+
+            sumOfBoughtSizes += size;
         }
+
+        return sumOfBoughtSizes;
     }
 
-    private void doSell(int size) {
+    private int doSell(int size, Integer price) {
+        int sumOfSoldSizes = 0;
+
         Integer maxPrice = bidPrices.peek();
         Integer sizeByMaxPrice = orderBook.get(maxPrice);
-        if(Objects.isNull(sizeByMaxPrice)) {
-            return;
-        }
 
-        if (size > sizeByMaxPrice) {
-            orderBook.remove(maxPrice);
-            bidPrices.poll();
+        if (size >= sizeByMaxPrice) {
+            while ((nonNull(sizeByMaxPrice) && isNull(price))
+                    || (nonNull(price) && nonNull(maxPrice) && price <= maxPrice)) {
+                if (size < sizeByMaxPrice) {
+                    int newSize = sizeByMaxPrice - size;
+                    orderBook.put(maxPrice, newSize);
+                    sumOfSoldSizes += size;
+                    break;
+                }
 
-            doSell(size - sizeByMaxPrice);
-        } else if (size == sizeByMaxPrice) {
-            orderBook.remove(maxPrice);
-            bidPrices.poll();
+                orderBook.remove(maxPrice);
+                bidPrices.poll();
+                sumOfSoldSizes += sizeByMaxPrice;
+
+                size -= sizeByMaxPrice;
+
+                maxPrice = bidPrices.peek();
+                sizeByMaxPrice = orderBook.get(maxPrice);
+            }
         } else {
             int newSize = sizeByMaxPrice - size;
             orderBook.put(maxPrice, newSize);
+
+            sumOfSoldSizes += size;
         }
+
+        return sumOfSoldSizes;
     }
 
 }
