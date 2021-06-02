@@ -208,7 +208,7 @@ class MarketProcessorTest {
 
         Stream<String> process = marketProcessor.process(
                 Stream.of(
-                        "u,9,1,bid",
+                        " u,9,1,bid",
                         "u,11,5,ask",
                         "q,best_bid",
                         "u,10,2,bid",
@@ -321,6 +321,18 @@ class MarketProcessorTest {
     }
 
     @Test
+    void buyNothing() {
+        MarketProcessor marketProcessor = new MarketProcessor();
+
+        Stream<String> process = marketProcessor.process(
+                Stream.of("o,buy,20")
+        );
+
+        List<String> collect = process.collect(Collectors.toList());
+        assertTrue(collect.isEmpty());
+    }
+
+    @Test
     void process4() {
         MarketProcessor marketProcessor = new MarketProcessor();
 
@@ -333,6 +345,19 @@ class MarketProcessorTest {
     }
 
     @Test
-    void clearOrderBook() {
+    void process7() {
+        MarketProcessor marketProcessor = new MarketProcessor();
+
+        Stream<String> process = marketProcessor.process(
+                Stream.of(
+                        "u,9,1,bid",
+                        "u,9,5,ask",
+                        "q,best_bid",
+                        "q,best_ask"
+                )
+        );
+
+        List<String> collect = process.collect(Collectors.toList());
+        assertEquals("9,4", collect.get(0));
     }
 }

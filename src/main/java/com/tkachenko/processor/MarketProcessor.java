@@ -27,15 +27,19 @@ public class MarketProcessor {
     public Stream<String> process(Stream<String> inputLines) {
         List<String> result = new ArrayList<>();
         inputLines.forEach(line -> {
-            if (line.startsWith("u")) {
+            line = line.trim();
+            if (line.charAt(0) == 'u') {
                 processUpdate(line);
-            } else if (line.startsWith("q")) {
+            } else if (line.charAt(0) == 'q') {
                 processQuery(line, result);
-            } else if (line.startsWith("o")) {
+            } else if (line.charAt(0) == 'o') {
                 processOrder(line);
             } else {
-                throw new IllegalInputException("There are no such events: " + line);
+                return;
             }
+//            else {
+//                throw new IllegalInputException("There are no such events: " + line);
+//            }
         });
 
         return result.stream();
@@ -54,8 +58,12 @@ public class MarketProcessor {
         Integer price = updateData.getPrice();
         Integer size = updateData.getSize();
 
+        if (price <= 0 || size < 0) {
+            return;
+        }
+
         if (type.equals("bid")) {
-            if (nonNull(askPrices.peek()) && price > askPrices.peek()) {
+            if (nonNull(askPrices.peek()) && price >= askPrices.peek()) {
                 int boughtSize = doBuy(size, price);
                 if (boughtSize > 0 && boughtSize < size) {
                     addBid(price, size - boughtSize);
@@ -64,7 +72,7 @@ public class MarketProcessor {
                 addBid(price, size);
             }
         } else if (type.equals("ask")) {
-            if (nonNull(bidPrices.peek()) && price < bidPrices.peek()) {
+            if (nonNull(bidPrices.peek()) && price <= bidPrices.peek()) {
                 int soldSize = doSell(size, price);
                 if (soldSize > 0 && soldSize < size) {
                     addAsk(price, size - soldSize);
@@ -72,51 +80,60 @@ public class MarketProcessor {
             } else {
                 addAsk(price, size);
             }
-        } else {
-            throw new IllegalInputException("There are no such update: " + line);
         }
+//        else {
+//            throw new IllegalInputException("There are no such update: " + line);
+//        }
     }
 
     private void addBid(Integer price, Integer size) {
-        if(askPrices.contains(price)) {
-            Integer askSize = orderBook.get(price);
-            if(size > askSize) {
-                askPrices.remove(price);
-                size -= askSize;
-                bidPrices.add(price);
-                orderBook.put(price, size);
-            } else if (size < askSize) {
-                size -= askSize;
-                orderBook.put(price, size);
-            } else {
-                askPrices.remove(price);
-                orderBook.remove(price);
-            }
-        } else {
+        if (bidPrices.contains(price)) {
+            orderBook.put(price, size);
+            return;
+        }
+//        if(askPrices.contains(price)) {
+//            Integer askSize = orderBook.get(price);
+//            if(size > askSize) {
+//                askPrices.remove(price);
+//                size -= askSize;
+//                bidPrices.add(price);
+//                orderBook.put(price, size);
+//            } else if (size < askSize) {
+//                size -= askSize;
+//                orderBook.put(price, size);
+//            } else {
+//                askPrices.remove(price);
+//                orderBook.remove(price);
+//            }
+//        } else {
             bidPrices.add(price);
             orderBook.put(price, size);
-        }
+        //}
     }
 
     private void addAsk(Integer price, Integer size) {
-        if (bidPrices.contains(price)) {
-            Integer bidSize = orderBook.get(price);
-            if (size > bidSize) {
-                bidPrices.remove(price);
-                size -= bidSize;
-                askPrices.add(price);
-                orderBook.put(price, size);
-            } else if(size < bidSize) {
-                size -= bidSize;
-                orderBook.put(price, size);
-            } else {
-                bidPrices.remove(price);
-                orderBook.remove(price);
-            }
-        } else {
+        if (askPrices.contains(price)) {
+            orderBook.put(price, size);
+            return;
+        }
+//        if (bidPrices.contains(price)) {
+//            Integer bidSize = orderBook.get(price);
+//            if (size > bidSize) {
+//                bidPrices.remove(price);
+//                size -= bidSize;
+//                askPrices.add(price);
+//                orderBook.put(price, size);
+//            } else if(size < bidSize) {
+//                size -= bidSize;
+//                orderBook.put(price, size);
+//            } else {
+//                bidPrices.remove(price);
+//                orderBook.remove(price);
+//            }
+//        } else {
             askPrices.add(price);
             orderBook.put(price, size);
-        }
+//        }
     }
 
     private void processQuery(String line, List<String> result) {
@@ -151,21 +168,28 @@ public class MarketProcessor {
             if (Objects.nonNull(bestBid) && Objects.nonNull(size)) {
                 result.add(bestBid + "," + size);
             }
-        } else {
-            throw new IllegalInputException("There are no such query: " + type);
         }
+//        else {
+//            throw new IllegalInputException("There are no such query: " + type);
+//        }
     }
 
     private void processOrder(String line) {
         MarketOrderData marketOrderData = orderBookParser.parseMarketOrder(line);
 
-        if (marketOrderData.getType().equals("sell")) {
-            doSell(marketOrderData.getSize(), null);
-        } else if (marketOrderData.getType().equals("buy")) {
-            doBuy(marketOrderData.getSize(), null);
-        } else {
-            throw new IllegalInputException("There are no such market orders: " + line);
+        Integer size = marketOrderData.getSize();
+        if (size < 0) {
+            return;
         }
+
+        if (marketOrderData.getType().equals("sell")) {
+            doSell(size, null);
+        } else if (marketOrderData.getType().equals("buy")) {
+            doBuy(size, null);
+        }
+//        else {
+//            throw new IllegalInputException("There are no such market orders: " + line);
+//        }
 
     }
 
@@ -175,9 +199,14 @@ public class MarketProcessor {
         Integer minPrice = askPrices.peek();
         Integer sizeByMinPrice = orderBook.get(minPrice);
 
+        if (isNull(minPrice) || isNull(sizeByMinPrice)) {
+            return sumOfBoughtSizes;
+        }
+
         if (size >= sizeByMinPrice) {
-            while ((nonNull(sizeByMinPrice) && isNull(price))
-                    || (nonNull(price) && nonNull(minPrice) && price >= minPrice)) {
+            while (((nonNull(sizeByMinPrice) && isNull(price))
+                    || (nonNull(price) && nonNull(minPrice) && nonNull(sizeByMinPrice) && price >= minPrice))
+                    && !orderBook.isEmpty() && !askPrices.isEmpty()) {
                 if (size < sizeByMinPrice) {
                     int newSize = sizeByMinPrice - size;
                     orderBook.put(minPrice, newSize);
@@ -210,9 +239,14 @@ public class MarketProcessor {
         Integer maxPrice = bidPrices.peek();
         Integer sizeByMaxPrice = orderBook.get(maxPrice);
 
+        if (isNull(maxPrice) || isNull(sizeByMaxPrice)) {
+            return sumOfSoldSizes;
+        }
+
         if (size >= sizeByMaxPrice) {
-            while ((nonNull(sizeByMaxPrice) && isNull(price))
-                    || (nonNull(price) && nonNull(maxPrice) && price <= maxPrice)) {
+            while (((nonNull(sizeByMaxPrice) && isNull(price))
+                    || (nonNull(price) && nonNull(maxPrice) && nonNull(sizeByMaxPrice) && price <= maxPrice))
+                    && !orderBook.isEmpty() && !bidPrices.isEmpty()) {
                 if (size < sizeByMaxPrice) {
                     int newSize = sizeByMaxPrice - size;
                     orderBook.put(maxPrice, newSize);
