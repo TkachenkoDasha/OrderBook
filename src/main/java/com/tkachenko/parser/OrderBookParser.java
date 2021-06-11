@@ -17,21 +17,21 @@ public class OrderBookParser {
 
     public QueryData parseQuery(String line) {
         String[] parsed = line.split(",");
-        Integer size = null;
+        Integer price = null;
         if (parsed.length == 3) {
-            size = Integer.parseInt(parsed[2]);
+            price = Integer.parseInt(parsed[2]);
         }
 
         String type = parsed[1];
 
-        return new QueryData(type, size);
+        return new QueryData(type, price);
     }
 
     public MarketOrderData parseMarketOrder(String line) {
         String[] parsed = line.split(",");
         String type = parsed[1];
-        int price = Integer.parseInt(parsed[2]);
+        int size = Integer.parseInt(parsed[2]);
 
-        return new MarketOrderData(type, price);
+        return new MarketOrderData(type, size);
     }
 }
