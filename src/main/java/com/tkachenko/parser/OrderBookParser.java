@@ -21,9 +21,7 @@ public class OrderBookParser {
         if (parsed.length == 3) {
             size = Integer.parseInt(parsed[2]);
         }
-//        else if(parsed.length != 2){
-//            throw new IllegalInputException("There are no such query: " + line);
-//        }
+
         String type = parsed[1];
 
         return new QueryData(type, size);
