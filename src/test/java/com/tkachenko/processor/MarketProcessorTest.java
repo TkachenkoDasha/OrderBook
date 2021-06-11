@@ -1,11 +1,11 @@
 package com.tkachenko.processor;
 
-import org.junit.jupiter.api.Disabled;
+import com.tkachenko.processor.impl.MarketProcessorImpl;
+import com.tkachenko.processor.impl.MarketProcessorTreeMapImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -13,13 +13,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class MarketProcessorTest {
 
-    MarketProcessor marketProcessor = new MarketProcessor();
+    MarketProcessor marketProcessor = new MarketProcessorTreeMapImpl();
 
 
     @Test
     @DisplayName("getSizeByPrice()")
     void getSizeByPrice() {
-        Stream<String> process = marketProcessor.process(
+        List<String> collect = marketProcessor.process(
                 Stream.of(
                         "u,20,5,bid",
                         "u,21,10,bid",
@@ -35,7 +35,6 @@ class MarketProcessorTest {
                         "q,size,8",
                         "q,size,888")
         );
-        List<String> collect = process.collect(Collectors.toList());
         assertEquals("0", collect.get(0));
         assertEquals("0", collect.get(1));
         assertEquals("0", collect.get(2));
@@ -48,31 +47,30 @@ class MarketProcessorTest {
     @Test
     @DisplayName("peek()")
     void getPeek() {
-        Stream<String> process = marketProcessor.process(
+        List<String> collect = marketProcessor.process(
                 Stream.of(
                         "u,20,5,ask",
                         "u,21,10,ask",
                         "u,18,15,ask",
                         "q,best_ask")
         );
-        List<String> collect = process.collect(Collectors.toList());
+
         assertEquals("18,15", collect.get(0));
 
-        Stream<String> process1 = marketProcessor.process(
+        List<String> collect1 = marketProcessor.process(
                 Stream.of(
                         "u,9,10,bid",
                         "u,8,5,bid",
                         "u,10,15,bid",
                         "q,best_bid")
         );
-        List<String> collect1 = process1.collect(Collectors.toList());
         assertEquals("10,15", collect1.get(0));
     }
 
 
     @Test
     void removeOrders() {
-        Stream<String> process = marketProcessor.process(
+        List<String> collect = marketProcessor.process(
                 Stream.of(
                         "u,22,15,ask",
                         "u,21,10,ask",
@@ -89,7 +87,7 @@ class MarketProcessorTest {
                         "o,buy,7",
                         "q,size,21")
         );
-        List<String> collect = process.collect(Collectors.toList());
+
         assertEquals("2", collect.get(0));
         assertEquals("5", collect.get(1));
         assertEquals("2", collect.get(2));
@@ -98,7 +96,7 @@ class MarketProcessorTest {
 
     @Test
     void removeOrders1() {
-        Stream<String> process = marketProcessor.process(
+        List<String> collect = marketProcessor.process(
                 Stream.of(
                         "u,10,5,bid",
                         "u,9,10,bid",
@@ -106,13 +104,13 @@ class MarketProcessorTest {
                         "o,sell,10",
                         "q,size,9")
         );
-        List<String> collect = process.collect(Collectors.toList());
+
         assertEquals("5", collect.get(0));
     }
 
     @Test
     void removeOrders2() {
-        Stream<String> process = marketProcessor.process(
+        List<String> collect = marketProcessor.process(
                 Stream.of(
                         "u,10,5,bid",
                         "u,9,5,bid",
@@ -122,7 +120,7 @@ class MarketProcessorTest {
                         "q,size,9",
                         "q,size,10")
         );
-        List<String> collect = process.collect(Collectors.toList());
+
         assertEquals("0", collect.get(0));
         assertEquals("0", collect.get(1));
         assertEquals("0", collect.get(2));
@@ -130,7 +128,7 @@ class MarketProcessorTest {
 
     @Test
     void removeOrders3() {
-        Stream<String> process = marketProcessor.process(
+        List<String> collect = marketProcessor.process(
                 Stream.of(
                         "u,10,5,ask",
                         "u,9,10,ask",
@@ -138,13 +136,13 @@ class MarketProcessorTest {
                         "o,buy,20",
                         "q,size,9")
         );
-        List<String> collect = process.collect(Collectors.toList());
+
         assertEquals("5", collect.get(0));
     }
 
     @Test
     void removeOrders4() {
-        Stream<String> process = marketProcessor.process(
+        List<String> collect = marketProcessor.process(
                 Stream.of(
                         "u,10,5,ask",
                         "u,9,5,ask",
@@ -154,7 +152,7 @@ class MarketProcessorTest {
                         "q,size,9",
                         "q,size,10")
         );
-        List<String> collect = process.collect(Collectors.toList());
+
         assertEquals("0", collect.get(0));
         assertEquals("0", collect.get(1));
         assertEquals("0", collect.get(2));
@@ -163,7 +161,7 @@ class MarketProcessorTest {
     @Test
     @DisplayName("insertMiddleOrder()")
     void insertMiddleOrder() {
-        Stream<String> process = marketProcessor.process(
+        List<String> collect = marketProcessor.process(
                 Stream.of(
                         "u,22,15,ask",
                         "u,21,10,ask",
@@ -176,7 +174,7 @@ class MarketProcessorTest {
                         "u,9,30,ask",
                         "q,size,9")
         );
-        List<String> collect = process.collect(Collectors.toList());
+
         assertEquals("5", collect.get(0));
         assertEquals("10", collect.get(1));
     }
@@ -184,7 +182,7 @@ class MarketProcessorTest {
     @Test
     @DisplayName("insertMiddleOrder()")
     void insertMiddleOrder2() {
-        Stream<String> process = marketProcessor.process(
+        List<String> collect = marketProcessor.process(
                 Stream.of(
                         "u,22,15,ask",
                         "u,21,10,ask",
@@ -197,16 +195,16 @@ class MarketProcessorTest {
                         "u,5,10,ask",
                         "q,size,9")
         );
-        List<String> collect = process.collect(Collectors.toList());
+
         assertEquals("5", collect.get(0));
         assertEquals("5", collect.get(1));
     }
 
     @Test
     void process() {
-        MarketProcessor marketProcessor = new MarketProcessor();
+        MarketProcessorImpl marketProcessor = new MarketProcessorImpl();
 
-        Stream<String> process = marketProcessor.process(
+        List<String> collect = marketProcessor.process(
                 Stream.of(
                         "u,9,1,bid",
                         "u,11,5,ask",
@@ -219,7 +217,7 @@ class MarketProcessorTest {
                         "u,11,0,ask")
         );
 
-        List<String> collect = process.collect(Collectors.toList());
+
         assertEquals("9,1", collect.get(0));
         assertEquals("10,2", collect.get(1));
         assertEquals("1", collect.get(2));
@@ -227,9 +225,9 @@ class MarketProcessorTest {
 
     @Test
     void process5() {
-        MarketProcessor marketProcessor = new MarketProcessor();
+        MarketProcessorImpl marketProcessor = new MarketProcessorImpl();
 
-        Stream<String> process = marketProcessor.process(
+        List<String> collect = marketProcessor.process(
                 Stream.of(
                         "u,22,15,ask",
                         "u,21,10,ask",
@@ -243,16 +241,16 @@ class MarketProcessorTest {
                         "q,size,9")
         );
 
-        List<String> collect = process.collect(Collectors.toList());
+
         assertEquals("5", collect.get(0));
         assertEquals("5", collect.get(1));
     }
 
     @Test
     void process6() {
-        MarketProcessor marketProcessor = new MarketProcessor();
+        MarketProcessorImpl marketProcessor = new MarketProcessorImpl();
 
-        Stream<String> process = marketProcessor.process(
+        List<String> collect = marketProcessor.process(
                 Stream.of(
                         "u,20,5,ask",
                         "u,21,10,ask",
@@ -270,7 +268,7 @@ class MarketProcessorTest {
                         "q,size,8")
         );
 
-        List<String> collect = process.collect(Collectors.toList());
+
         assertEquals("0", collect.get(0));
         assertEquals("0", collect.get(1));
         assertEquals("0", collect.get(2));
@@ -281,9 +279,9 @@ class MarketProcessorTest {
 
     @Test
     void process1() {
-        MarketProcessor marketProcessor = new MarketProcessor();
+        MarketProcessorImpl marketProcessor = new MarketProcessorImpl();
 
-        Stream<String> process = marketProcessor.process(
+        List<String> collect = marketProcessor.process(
                 Stream.of(
                         "u,9,1,bid",
                         "u,9,5,ask",
@@ -292,47 +290,72 @@ class MarketProcessorTest {
                 )
         );
 
-        List<String> collect = process.collect(Collectors.toList());
+
         assertEquals("9,4", collect.get(0));
     }
 
     @Test
     void process2() {
-        MarketProcessor marketProcessor = new MarketProcessor();
+        MarketProcessorImpl marketProcessor = new MarketProcessorImpl();
 
-        Stream<String> process = marketProcessor.process(
+        List<String> collect = marketProcessor.process(
                 Stream.of("q,best_bid")
         );
 
-        List<String> collect = process.collect(Collectors.toList());
+
         assertTrue(collect.isEmpty());
     }
 
     @Test
     void process3() {
-        MarketProcessor marketProcessor = new MarketProcessor();
+        MarketProcessorImpl marketProcessor = new MarketProcessorImpl();
 
-        Stream<String> process = marketProcessor.process(
+        List<String> collect = marketProcessor.process(
                 Stream.of("q,best_ask")
         );
 
-        List<String> collect = process.collect(Collectors.toList());
+
+        assertTrue(collect.isEmpty());
+    }
+
+    @Test
+    void buyNothing() {
+        MarketProcessorImpl marketProcessor = new MarketProcessorImpl();
+
+        List<String> collect = marketProcessor.process(
+                Stream.of("o,buy,20")
+        );
+
+
         assertTrue(collect.isEmpty());
     }
 
     @Test
     void process4() {
-        MarketProcessor marketProcessor = new MarketProcessor();
+        MarketProcessorImpl marketProcessor = new MarketProcessorImpl();
 
-        Stream<String> process = marketProcessor.process(
+        List<String> collect = marketProcessor.process(
                 Stream.of("q,size,19")
         );
 
-        List<String> collect = process.collect(Collectors.toList());
+
         assertEquals("0", collect.get(0));
     }
 
     @Test
-    void clearOrderBook() {
+    void process7() {
+        MarketProcessorImpl marketProcessor = new MarketProcessorImpl();
+
+        List<String> collect = marketProcessor.process(
+                Stream.of(
+                        "u,9,1,bid",
+                        "u,9,5,ask",
+                        "q,best_bid",
+                        "q,best_ask"
+                )
+        );
+
+
+        assertEquals("9,4", collect.get(0));
     }
 }
